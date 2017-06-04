@@ -1,11 +1,20 @@
 package com.coolweather.app.util;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.text.TextUtils;
 
 import com.coolweather.app.db.CoolWeatherDB;
 import com.coolweather.app.model.City;
 import com.coolweather.app.model.County;
 import com.coolweather.app.model.Province;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by wangzhichao on 2017/6/3.
@@ -90,5 +99,65 @@ public class Utility {
             coolWeatherDB.saveCounty(county);
         }
         return true;
+    }
+
+    /**
+     * 解析服务器返回的天气信息数据,并将数据保存到本地
+     * @param context
+     * @param response
+     */
+    public static void handleWeatherResponse(Context context,String response){
+        if (TextUtils.isEmpty(response)) {
+            return;
+        }
+
+        try {
+            String cityName = "";
+            String weatherCode = "";
+            String weatherDesc = "";
+            String temp1 = "";
+            String temp2 = "";
+            String publishTime = "";
+            JSONObject jsonObject = new JSONObject(response);
+            if (jsonObject.has("weatherinfo")) {
+                JSONObject weatherinfo = jsonObject.getJSONObject("weatherinfo");
+                if (weatherinfo.has("city")) {
+                    cityName = weatherinfo.getString("city");
+                }
+                if (weatherinfo.has("cityid")) {
+                    weatherCode = weatherinfo.getString("cityid");
+                }
+                if (weatherinfo.has("weather")) {
+                    weatherDesc = weatherinfo.getString("weather");
+                }
+                if (weatherinfo.has("temp1")){
+                    temp1 = weatherinfo.getString("temp1");
+                }
+                if (weatherinfo.has("temp2")){
+                    temp2 = weatherinfo.getString("temp2");
+                }
+                if (weatherinfo.has("ptime")){
+                    publishTime = weatherinfo.getString("ptime");
+                }
+            }
+
+            saveWeatherInfo(context,cityName,weatherCode,weatherDesc,temp1,temp2,publishTime);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void saveWeatherInfo(Context context,  String cityName, String weatherCode,String weatherDesc,String temp1, String temp2, String ptime){
+        SharedPreferences sp = context.getSharedPreferences("weatherinfo", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putBoolean("city_selected", true);
+        editor.putString("city_name", cityName);
+        editor.putString("weather_code", weatherCode);
+        editor.putString("weather_desc", weatherDesc);
+        editor.putString("temp1", temp1);
+        editor.putString("temp2", temp2);
+        editor.putString("ptime", ptime);
+        editor.putString("current_date", new SimpleDateFormat("yyyy年M月d日", Locale.CHINA).format(new Date()));
+        editor.apply();
     }
 }
