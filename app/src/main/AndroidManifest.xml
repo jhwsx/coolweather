@@ -19,7 +19,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activity.WeatherActivity"></activity>
+        <activity android:name=".activity.WeatherActivity" />
+
+        <service
+            android:name=".service.AutoUpdateService"/>
+        <receiver android:name=".receiver.AutoUpdateReceiver" >
+            <intent-filter>
+                <action android:name="com.weather.app.ACTION.ALARM" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
