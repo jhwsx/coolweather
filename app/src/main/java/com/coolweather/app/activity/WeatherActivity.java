@@ -2,6 +2,7 @@ package com.coolweather.app.activity;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -15,7 +16,7 @@ import com.coolweather.app.util.HttpCallbackListener;
 import com.coolweather.app.util.HttpUtil;
 import com.coolweather.app.util.Utility;
 
-public class WeatherActivity extends Activity {
+public class WeatherActivity extends Activity implements View.OnClickListener {
 
     private Context context;
     private TextView titleText;
@@ -25,6 +26,8 @@ public class WeatherActivity extends Activity {
     private TextView tvPublishTemp2;
     private LinearLayout linearLayoutWeather;
     private TextView tvPublishDesc;
+    private TextView tvChangeCity;
+    private TextView tvRefresh;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +57,10 @@ public class WeatherActivity extends Activity {
         tvPublishTemp1 = (TextView) findViewById(R.id.tv_publish_temp1);
         tvPublishTemp2 = (TextView) findViewById(R.id.tv_publish_temp2);
         linearLayoutWeather = (LinearLayout) findViewById(R.id.linearlayout_weather);
+        tvChangeCity = (TextView) findViewById(R.id.tv_change_city);
+        tvRefresh = (TextView) findViewById(R.id.tv_refresh);
+        tvChangeCity.setOnClickListener(this);
+        tvRefresh.setOnClickListener(this);
     }
 
     /**
@@ -78,6 +85,8 @@ public class WeatherActivity extends Activity {
                     String[] array = response.split("\\|");
                     if (array != null && array.length == 2) {
                         String weatherCode = array[1];
+                        SharedPreferences sp = context.getSharedPreferences("weatherinfo", Context.MODE_PRIVATE);
+                        sp.edit().putString("weather_code", weatherCode).apply();
                         queryWeatherInfo(weatherCode);
                     }
                 } else if ("weatherCode".equals(type)){
@@ -116,5 +125,26 @@ public class WeatherActivity extends Activity {
         tvPublishTemp2.setText(sp.getString("temp2", ""));
         titleText.setVisibility(View.VISIBLE);
         linearLayoutWeather.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v == tvChangeCity){
+            // 跳转到选择城市页面
+            Intent intent = new Intent(context, ChooseAreaActivity.class);
+            intent.putExtra("from_weather_activity", true);
+            startActivity(intent);
+            finish();
+        } else if (v == tvRefresh){
+            tvPublishTime.setText("同步中...");
+            // 获取天气代号
+            SharedPreferences sp = context.getSharedPreferences("weatherinfo", Context.MODE_PRIVATE);
+            String weatherCode = sp.getString("weather_code", "");
+            if (! TextUtils.isEmpty(weatherCode)) {
+                // 重新查询
+                queryWeatherInfo(weatherCode);
+            }
+
+        }
     }
 }
